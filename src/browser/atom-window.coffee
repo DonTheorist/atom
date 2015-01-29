@@ -74,9 +74,9 @@ class AtomWindow
     delete loadSettings['windowState']
 
     url.format
-      protocol: 'file'
+      protocol: 'asar'
       pathname: "#{@resourcePath}/static/index.html"
-      slashes: true
+      slashes: false
       query: {loadSettings: JSON.stringify(loadSettings)}
 
   hasProjectPath: -> @projectPath?.length > 0
