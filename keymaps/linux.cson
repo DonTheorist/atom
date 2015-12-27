@@ -9,7 +9,6 @@
   'ctrl-alt-r': 'window:reload'
   'ctrl-shift-i': 'window:toggle-dev-tools'
   'ctrl-alt-p': 'window:run-package-specs'
-  'ctrl-alt-s': 'application:run-all-specs'
   'ctrl-shift-o': 'application:open-folder'
   'ctrl-alt-o': 'application:add-project-folder'
   'ctrl-shift-pageup': 'pane:move-item-left'
@@ -142,6 +141,10 @@
   'ctrl-k ctrl-7': 'editor:fold-at-indent-level-7'
   'ctrl-k ctrl-8': 'editor:fold-at-indent-level-8'
   'ctrl-k ctrl-9': 'editor:fold-at-indent-level-9'
+
+'atom-workspace atom-pane':
+  'ctrl-alt-=': 'pane:increase-size'
+  'ctrl-alt--': 'pane:decrease-size'
 
 # allow standard input fields to work correctly
 'body .native-key-bindings':

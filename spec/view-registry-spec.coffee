@@ -1,5 +1,4 @@
 ViewRegistry = require '../src/view-registry'
-{View} = require '../src/space-pen-extensions'
 
 describe "ViewRegistry", ->
   registry = null
@@ -16,15 +15,13 @@ describe "ViewRegistry", ->
         node = document.createElement('div')
         expect(registry.getView(node)).toBe node
 
-    describe "when passed a SpacePen view", ->
-      it "returns the root node of the view with a .spacePenView property pointing at the SpacePen view", ->
-        class TestView extends View
-          @content: -> @div "Hello"
+    describe "when passed an object with an element property", ->
+      it "returns the element property if it's an instance of HTMLElement", ->
+        class TestComponent
+          constructor: -> @element = document.createElement('div')
 
-        view = new TestView
-        node = registry.getView(view)
-        expect(node.textContent).toBe "Hello"
-        expect(node.spacePenView).toBe view
+        component = new TestComponent
+        expect(registry.getView(component)).toBe component.element
 
     describe "when passed a model object", ->
       describe "when a view provider is registered matching the object's constructor", ->
@@ -50,31 +47,24 @@ describe "ViewRegistry", ->
           expect(view2 instanceof TestView).toBe true
           expect(view2.model).toBe subclassModel
 
+      describe "when a view provider is registered generically, and works with the object", ->
+        it "constructs a view element and assigns the model on it", ->
+          model = {a: 'b'}
+
+          registry.addViewProvider (model) ->
+            if model.a is 'b'
+              element = document.createElement('div')
+              element.className = 'test-element'
+              element
+
+          view = registry.getView({a: 'b'})
+          expect(view.className).toBe 'test-element'
+
+          expect(-> registry.getView({a: 'c'})).toThrow()
+
       describe "when no view provider is registered for the object's constructor", ->
-        describe "when the object has a .getViewClass() method", ->
-          it "builds an instance of the view class with the model, then returns its root node with a __spacePenView property pointing at the view", ->
-            class TestView extends View
-              @content: (model) -> @div model.name
-              initialize: (@model) ->
-
-            class TestModel
-              constructor: (@name) ->
-              getViewClass: -> TestView
-
-            model = new TestModel("hello")
-            node = registry.getView(model)
-
-            expect(node.textContent).toBe "hello"
-            view = node.spacePenView
-            expect(view instanceof TestView).toBe true
-            expect(view.model).toBe model
-
-            # returns the same DOM node for repeated calls
-            expect(registry.getView(model)).toBe node
-
-        describe "when the object has no .getViewClass() method", ->
-          it "throws an exception", ->
-            expect(-> registry.getView(new Object)).toThrow()
+        it "throws an exception", ->
+          expect(-> registry.getView(new Object)).toThrow()
 
   describe "::addViewProvider(providerSpec)", ->
     it "returns a disposable that can be used to remove the provider", ->
@@ -234,3 +224,21 @@ describe "ViewRegistry", ->
       window.dispatchEvent(new UIEvent('resize'))
 
       expect(events).toEqual ['poll 1', 'poll 2']
+
+  describe "::getNextUpdatePromise()", ->
+    it "returns a promise that resolves at the end of the next update cycle", ->
+      updateCalled = false
+      readCalled = false
+      pollCalled = false
+
+      waitsFor 'getNextUpdatePromise to resolve', (done) ->
+        registry.getNextUpdatePromise().then ->
+          expect(updateCalled).toBe true
+          expect(readCalled).toBe true
+          expect(pollCalled).toBe true
+          done()
+
+        registry.updateDocument -> updateCalled = true
+        registry.readDocument -> readCalled = true
+        registry.pollDocument -> pollCalled = true
+        registry.pollAfterNextUpdate()
